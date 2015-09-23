@@ -449,6 +449,7 @@ bool createStep(float &step_L, float step_dir,float &walker_x_pos,
             for (int j=round(walker_x_pos)-len; j<=round(walker_x_pos)+len;++j){
                 if (on_lattice_cluster[i][j] != 0){
                     labels.push_back(on_lattice_cluster[i][j]);
+
                 }
             }
         }
@@ -486,8 +487,8 @@ bool createStep(float &step_L, float step_dir,float &walker_x_pos,
         return false;
     }
     else {
-        for (unsigned int i = 0; i < x_pos.size(); ++i){
-        }
+        //for (unsigned int i = 0; i < x_pos.size(); ++i){
+        //}
         step_L = std::max(float(sqrt(pow(walker_x_pos-x_pos[0],2) + 
                           pow(walker_y_pos-y_pos[0],2)+r_p) -
                           r_c - len),

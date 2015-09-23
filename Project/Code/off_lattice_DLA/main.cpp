@@ -10,11 +10,11 @@ using namespace std;
 
 int main(){
 //---------------------------------Parameters-----------------------------------
-    int nbr_particles = 50000;    // Number of particles wanted in cluster.
+    int nbr_particles = 1000000;    // Number of particles wanted in cluster.
     float l_0 = 0.00000001;     // Typical length scale of the system.
     float t_0 = 0.001;          // Typical time scale for the system.
     int D_max = 50;              // Parameter used to optimize algorithm.
-    int system_length = 5000;     // Size of grids used to describe the syst.
+    int system_length = 13000;     // Size of grids used to describe the syst.
     float r_p = 1.0;            // Radius of particles. Should be alterable.
     float L_min = 1.0;
     double pi = 3.1415926535897932384626433832; // Declaring pi.
@@ -47,15 +47,15 @@ int main(){
     initOnLatticeCluster(on_lattice_cluster,system_length);
     initOnLatticeDistance(on_lattice_distance, system_length, D_max);
     initVicinity(vicinity,D_max);
-//    neighbourDist(on_lattice_distance, D_max, system_length/2, system_length/2,
-//                  system_length);
-//    runAll(step_L, step_L, seed, walker_x_pos, walker_y_pos, pi, r_p,
-//           on_lattice_distance, on_lattice_cluster, L_min, D_max, x_pos, y_pos,
-//           system_length, nbr_particles, counter, r_c);   
-//    writeGrid(x_pos, y_pos, r_p);
-//    plotGnuplot(system_length);
-//    std::cout << "Fractal dimension = " << findFractalDim(x_pos, y_pos, r_p,
-//                                                          r_c) << std::endl;
+    neighbourDist(on_lattice_distance, D_max, system_length/2, system_length/2,
+                  system_length);
+    runAll(step_L, step_L, seed, walker_x_pos, walker_y_pos, pi, r_p,
+           on_lattice_distance, on_lattice_cluster, L_min, D_max, x_pos, y_pos,
+           system_length, nbr_particles, counter, r_c);   
+    writeGrid(x_pos, y_pos, r_p);
+    plotGnuplot(system_length);
+    std::cout << "Fractal dimension = " << findFractalDim(x_pos, y_pos, r_p,
+                                                          r_c) << std::endl;
 //------------------Test Print Section------------------------------------------
     //printDistances(x_pos, y_pos, r_p);
 //    for (unsigned int j = 0; j < 1000; ++j){

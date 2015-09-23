@@ -2,7 +2,6 @@
 #include <fstream>
 #include <vector>
 #include <math.h>
-//#include <cmath>
 #include <random>
 #include <algorithm>
 
@@ -343,30 +342,23 @@ float findRadius(std::vector<float> &x_pos, std::vector<float> &y_pos,
 
 void startWalker(float &walker_x_pos, float &walker_y_pos, int D_max,
                  std::vector<float> &x_pos, std::vector<float> &y_pos,
-                 float theta, double pi, float r_p, float &r_c){
-    float circ_rad = r_c + D_max;
+                 float theta, double pi, float r_p){
+    float circ_rad = findRadius(x_pos, y_pos, r_p) + 2*D_max;
+//    std::cout << "start particle rand dir = " << theta << std::endl;
     walker_x_pos = x_pos[0] + circ_rad*cos(theta);
     walker_y_pos = y_pos[0] + circ_rad*sin(theta);
-//    walker_x_pos = circ_rad*cos(theta);
-//    walker_y_pos = circ_rad*sin(theta);
 }
 
-float updateCluster(std::vector<std::vector<int>> &on_lattice_cluster,
+void updateCluster(std::vector<std::vector<int>> &on_lattice_cluster,
                    std::vector<std::vector<int>> &on_lattice_distance,
                    std::vector<float> &x_pos, std::vector<float> &y_pos,
                    float walker_x_pos, float walker_y_pos, int D_max,
-                   int sys_len, float &r_c){
+                   int sys_len){
     x_pos.push_back(walker_x_pos);
     y_pos.push_back(walker_y_pos);
     on_lattice_cluster[floor(walker_y_pos)][floor(walker_x_pos)] = x_pos.size();
     neighbourDist(on_lattice_distance, D_max, floor(walker_y_pos),
                   floor(walker_x_pos), sys_len);
-    float tmp = std::sqrt(std::pow(walker_x_pos - x_pos[0],2) + 
-                          std::pow(walker_y_pos - y_pos[0],2));
-    if (tmp > r_c){
-        r_c = tmp;
-    } 
-    return r_c;
 }
 
 float findD_wc(float walker_x_pos, float walker_y_pos, int D_max,
@@ -423,10 +415,16 @@ float LHit(float step_L, float step_dir, float x_c, float y_c, float x_p,
 
 bool killParticle(float walker_x_pos, float walker_y_pos,
                   std::vector<float> &x_pos, std::vector<float> &y_pos,
-                  float r_p, float &r_c){
+                  float r_p){
     if (sqrt(pow(walker_x_pos-x_pos[0],2) + pow(walker_y_pos-y_pos[0],2)) >= 
-             3.0*(r_c+1)){ // 3 should be 5 i paper
-    return true;
+             4.0*(findRadius(x_pos, y_pos, r_p)+1)){
+//        std::cout << "Particle is killed, r = " 
+//                  << sqrt(pow(walker_x_pos-x_pos[0],2) + 
+//                          pow(walker_y_pos-y_pos[0],2)+r_p)
+//                  << std::endl;
+//        std::cout << "comparison is = " << 15*(findRadius(x_pos, y_pos, r_p)+1)
+//                  << std::endl;
+        return true;
     }
     else {
         return false;
@@ -438,7 +436,7 @@ bool createStep(float &step_L, float step_dir,float &walker_x_pos,
                 std::vector<std::vector<int>> &on_lattice_distance,
                 std::vector<std::vector<int>> &on_lattice_cluster,
                 float L_min, int D_max, std::vector<float> &x_pos,
-                std::vector<float> &y_pos, int sys_len, float &r_c){
+                std::vector<float> &y_pos, int sys_len){
     int d_wc = findD_wc(walker_x_pos, walker_y_pos, D_max, on_lattice_distance);
     float len = 2*r_p + L_min + 1;
     std::vector<float> min_L;
@@ -468,9 +466,9 @@ bool createStep(float &step_L, float step_dir,float &walker_x_pos,
         if (step_L < step_org){
             walker_x_pos += step_L*std::cos(step_dir);
             walker_y_pos += step_L*std::sin(step_dir);
-            r_c = updateCluster(on_lattice_cluster, on_lattice_distance,
+            updateCluster(on_lattice_cluster, on_lattice_distance,
                           x_pos, y_pos, walker_x_pos,walker_y_pos, D_max,
-                          sys_len, r_c);
+                          sys_len);
             return true;
         }
         else {
@@ -490,12 +488,27 @@ bool createStep(float &step_L, float step_dir,float &walker_x_pos,
         }
         step_L = std::max(float(sqrt(pow(walker_x_pos-x_pos[0],2) + 
                           pow(walker_y_pos-y_pos[0],2)+r_p) -
-                          r_c - len),
+                          findRadius(x_pos, y_pos, r_p)- len),
                           float(D_max - len));
-
         walker_x_pos += step_L*std::cos(step_dir);
         walker_y_pos += step_L*std::sin(step_dir);
         return false;
+    }
+}
+
+void performWalk(float &step_L, float &step_dir, std::mt19937::result_type seed,
+                float &walker_x_pos, float &walker_y_pos, double pi, float r_p,
+                std::vector<std::vector<int>> &on_lattice_distance,
+                std::vector<std::vector<int>> &on_lattice_cluster,
+                float L_min, int D_max, std::vector<float> &x_pos,
+                std::vector<float> &y_pos, int sys_len){
+    bool hit = false;
+    bool kill = false;
+    while ((hit == false) && (kill == false)) {
+        hit = createStep(step_L, step_dir, walker_x_pos, walker_y_pos, pi,
+                r_p, on_lattice_distance, on_lattice_cluster, L_min, D_max,
+                x_pos, y_pos, sys_len);
+        kill = killParticle(walker_x_pos, walker_y_pos, x_pos, y_pos, r_p);
     }
 }
 
@@ -504,8 +517,7 @@ void runAll(float &step_L, float &step_dir, std::mt19937::result_type seed,
                 std::vector<std::vector<int>> &on_lattice_distance,
                 std::vector<std::vector<int>> &on_lattice_cluster,
                 float L_min, int D_max, std::vector<float> &x_pos,
-                std::vector<float> &y_pos, int sys_len, int nbr_particles,
-                unsigned int counter, float &r_c){
+                std::vector<float> &y_pos, int sys_len, int nbr_particles){
 
     auto rand_dir = std::bind(std::uniform_real_distribution<float>(0,2*pi),
 				   std::mt19937(seed));
@@ -513,19 +525,16 @@ void runAll(float &step_L, float &step_dir, std::mt19937::result_type seed,
     bool kill = false;
     while (x_pos.size() < nbr_particles){
         startWalker(walker_x_pos, walker_y_pos, D_max, x_pos, y_pos, rand_dir(),
-                    pi, r_p, r_c);
+                    pi, r_p);
         bool hit = false;
         bool kill = false;
         while ((hit == false) && (kill == false)){
             hit = createStep(step_L, rand_dir(), walker_x_pos, walker_y_pos, pi,
                              r_p, on_lattice_distance, on_lattice_cluster,
-                             L_min, D_max, x_pos, y_pos, sys_len, r_c);
-            kill = killParticle(walker_x_pos, walker_y_pos, x_pos, y_pos, r_p,
-                                r_c);
-            ++counter;
+                             L_min, D_max, x_pos, y_pos, sys_len);
+            kill = killParticle(walker_x_pos, walker_y_pos, x_pos, y_pos, r_p);
         }
     }
-    std::cout << "counter = " << counter << std::endl;
 }
 
 
@@ -558,8 +567,8 @@ void plotGnuplot(int &arr_len){
 
 
 float findFractalDim(std::vector<float> x_pos, std::vector<float> y_pos,
-                     float r_p, float &r_c){
-    return log(x_pos.size())/log(r_c);
+                     float r_p){
+    return log(x_pos.size())/log(findRadius(x_pos, y_pos, r_p));
 }
 
 void printDistances(std::vector<float> &x_pos, std::vector<float> &y_pos,
@@ -579,4 +588,3 @@ void printDistances(std::vector<float> &x_pos, std::vector<float> &y_pos,
     }
     std::cout << "len Shorter = " << shorter.size() << std::endl;
 }
-

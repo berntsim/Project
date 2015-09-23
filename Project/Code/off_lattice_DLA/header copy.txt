@@ -26,13 +26,13 @@ float findRadius(std::vector<float> &x_pos, std::vector<float> &y_pos,
 
 void startWalker(float &walker_x_pos, float &walker_y_pos, int D_max,
                  std::vector<float> &x_pos, std::vector<float> &y_pos,
-                 float theta, double pi, float r_p, float &r_c);
+                 float theta, double pi, float r_p);
 
-float updateCluster(std::vector<std::vector<int>> &on_lattice_cluster,
+void updateCluster(std::vector<std::vector<int>> &on_lattice_cluster,
                    std::vector<std::vector<int>> &on_lattice_distance,
                    std::vector<float> &x_pos, std::vector<float> &y_pos,
                    float walker_x_pos, float walker_y_pos, int D_max,
-                   int sys_len, float &r_c);
+                   int sys_len);
 
 float findD_wc(float walker_x_pos, float walker_y_pos, int D_max,
               std::vector<std::vector<int>> &on_lattice_distance);
@@ -44,29 +44,35 @@ bool isHit();
 
 bool killParticle(float walker_x_pos, float walker_y_pos,
                   std::vector<float> &x_pos, std::vector<float> &y_pos,
-                  float r_p, float &r_c);
+                  float r_p);
 
 bool createStep(float &step_L, float step_dir, float &walker_x_pos,
                 float &walker_y_pos, double pi, float r_p,
                 std::vector<std::vector<int>> &on_lattice_distance,
                 std::vector<std::vector<int>> &on_lattice_cluster,
                 float L_min, int D_max, std::vector<float> &x_pos,
-                std::vector<float> &y_pos, float &r_c);
+                std::vector<float> &y_pos);
+
+void performWalk(float &step_L, float &step_dir, std::mt19937::result_type seed,
+                float &walker_x_pos, float &walker_y_pos, double pi, float r_p,
+                std::vector<std::vector<int>> &on_lattice_distance,
+                std::vector<std::vector<int>> &on_lattice_cluster,
+                float L_min, int D_max, std::vector<float> &x_pos,
+                std::vector<float> &y_pos, int sys_len);
 
 void runAll(float &step_L, float &step_dir, std::mt19937::result_type seed,
                 float &walker_x_pos, float &walker_y_pos, double pi, float r_p,
                 std::vector<std::vector<int>> &on_lattice_distance,
                 std::vector<std::vector<int>> &on_lattice_cluster,
                 float L_min, int D_max, std::vector<float> &x_pos,
-                std::vector<float> &y_pos, int sys_len, int nbr_particles,
-                unsigned int counter, float &r_c);
+                std::vector<float> &y_pos, int sys_len, int nbr_particles);
 
 void writeGrid(std::vector<float> &x_pos, std::vector<float> &y_pos, float r_p);
 
 void plotGnuplot(int &arr_len);
 
 float findFractalDim(std::vector<float> x_pos, std::vector<float> y_pos,
-                     float r_p, float &r_c);
+                     float r_p);
 
 
 

@@ -1,0 +1,49 @@
+%Vi starter med preamble, hvor vi definerer pakker osv som vi bruker i dokumentet. Hvis ikke du vet hva du gjør, så ikke endre noe på dette.
+
+%%PREAMBLE
+%%===================================
+\documentclass[12pt, a4paper]{article}
+\usepackage{graphicx}
+%\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{color}
+\usepackage{multirow}
+%\usepackage[margin=1in]{geometry} %BESTEMMER STORRELSEN PA DOKUMENTETS MARG.
+\usepackage{wrapfig}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\renewcommand{\arraystretch}{1.5} % increase vertical spacing in table cells
+
+\usepackage[nottoc,notlot,notlof,numbib]{tocbibind}
+
+\setcounter{tocdepth}{2}
+
+\renewcommand*\thesection{\arabic{section}}
+
+%\usepackage[backend=bibtex]{biblatex}
+%%===================================
+
+%I seksjonen under begynner selve dokumentet. Det er organisert slik at man skriver hver seksjon som eksterne dokumenter, og deretter inkluderer dem inn i hoveddokumentet. Dette gjøres ved å skrive \inlcude{ditt dokuments navn}.
+
+%Vi bestemmer også stilen på dokumentet her. Dette er i utgangspunktet mulig å endre en del på, men det kan være stress, og ting kan fuckes opp ganske uten varsel, så anbefaler å være forsiktig.
+
+%\titleformat{\chapter}{\normalfont\huge}{\thechapter.}{20pt}{\huge\textbf}
+
+\newcommand{\MarginText}[1]{\marginpar{\raggedleft\small#1}}
+\reversemarginpar
+
+%\usepackage{refcheck}
+
+%%===================================
+

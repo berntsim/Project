@@ -1,0 +1,8 @@
+\section{Theory}
+The fundamental algorithm of DLA is as follows; a seed particle (the particle we follow) is placed at the centre. This particle will be the basis of the growing cluster. Another particle is then introduced at some distance from this seeding particle. The starting position of this particle can in principle be infinitely far away from the particle, but for practical matters, it is often placed rather close to the seeding particle (??? is this WLOG?). This particle will perform a random walk in the space around the seeding particle, with the intention that they at some point in time, the walking particle will "hit" (i.e. be sufficiently close to) the seeding particle, and the two will clump together. 
+
+\subsection{On-lattice DLA}
+In the case of on-lattice DLA, the random walk performed is usually discrete along the axes of the lattice. That means that the particle may only walk, and latch to the cluster, along these directions. Usually, the particle moves a length equivalent to the lattice constant per jump, but this may be varied. 
+
+\subsection{Off-lattice DLA}
+For the off-lattice DLA, the walking particles are to restricted to walk along axes, but can move in any direction. 

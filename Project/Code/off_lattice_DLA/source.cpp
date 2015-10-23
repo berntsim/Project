@@ -10,6 +10,8 @@
 
 void initEx_pos(std::vector<float> &x_pos, std::vector<float> &y_pos,
                 int sys_len){
+// This function initializes the exact position vectors.
+// Element nbr [i] in both will correspond to the cartesian coordinates.    
     x_pos.push_back(float(sys_len)/2.0);
     y_pos.push_back(float(sys_len)/2.0);
 }
@@ -17,6 +19,9 @@ void initEx_pos(std::vector<float> &x_pos, std::vector<float> &y_pos,
 
 void initOnLatticeCluster(std::vector<std::vector<int>> &on_lattice_cluster, 
                                 int system_length){
+// This function initializes the on-grid approximated positions. Note that we
+// include the seed particle in this initialization, and place it at the centre.
+// All other points in space are empty - and are therefore set to 0.
     for (unsigned int i = 0; i < system_length; ++i){
         for (unsigned int j = 0; j < system_length; ++j){
             if ((i == system_length/2) && (j == system_length/2)){
@@ -31,6 +36,10 @@ void initOnLatticeCluster(std::vector<std::vector<int>> &on_lattice_cluster,
 
 void initOnLatticeDistance(std::vector<std::vector<int>> &on_lattice_distance,
                            int sys_len, int D_max){
+// This function initializes the on-lattice distances. This array is used to
+// simplify the calculations (or checks), so that one can check how far the
+// walker is from the cluster. This is the part of the algorithm that increases
+// the speed significantly.
     for (unsigned int i = 0; i < sys_len; ++i){
         for (unsigned int j = 0; j < sys_len; ++j){
             if ((i == sys_len/2) && (j == sys_len/2)){
@@ -46,6 +55,12 @@ void initOnLatticeDistance(std::vector<std::vector<int>> &on_lattice_distance,
 
 void neighbourDist(std::vector<std::vector<int>> &on_lattice_distance,
                    int D_max, int row, int col, int sys_len){
+// This function basically updates the on_lattice_distance array, so that when 
+// new particles are added to the cluster, they will be taken into account by 
+// the walking particle when figuring out the distance between the walker and
+// the cluster. Note that this function is implemented so that border-cases are
+// handed properly. So for practical matters, only the last "else" condition 
+// will apply.
     if ((row - D_max < 0) && (col - D_max)){ 
         int min_row = std::min(row,D_max);
         int min_col = std::min(col,D_max);
@@ -308,6 +323,8 @@ void neighbourDist(std::vector<std::vector<int>> &on_lattice_distance,
 }
 
 void printGrid(std::vector<std::vector<int>> &grid){
+// Like the title suggests, this function prints whatever grid you would like to
+// the screen. 
     for (int i = grid.size()-1; i >= 0; --i){
         for (int j = 0; j < grid.size(); ++j){
             std::cout << grid[i][j];
@@ -318,6 +335,7 @@ void printGrid(std::vector<std::vector<int>> &grid){
 }
 
 void initVicinity(std::vector<std::vector<int>> &vicinity, int D_max){
+// This function initalizes the Vicinity, but I never use this.     
     for (unsigned int i = 0; i < (2*D_max + 1)/2+1; ++i){
         for (unsigned int j = 0; j < (2*D_max + 1)/2+1; ++j){
             vicinity[(2*D_max+1)/2+i][(2*D_max+1)/2+j] = floor(sqrt(j*j + i*i));
@@ -328,45 +346,48 @@ void initVicinity(std::vector<std::vector<int>> &vicinity, int D_max){
     }
 }
 
-float findRadius(std::vector<float> &x_pos, std::vector<float> &y_pos,
-                 float r_p){
-    float rad  = 0;
-    for (unsigned int i = 0; i < x_pos.size(); ++i){
-        if (rad < sqrt(pow(x_pos[i] - x_pos[0],2) + pow(y_pos[i] - y_pos[0],2))
-            +r_p){
-            rad = sqrt(pow(x_pos[i] - x_pos[0],2) + pow(y_pos[i] - y_pos[0],2))
-                  +r_p; 
-        }
-    }
-    return rad;
-}
+//float findRadius(std::vector<float> &x_pos, std::vector<float> &y_pos,
+//                 float r_p){
+//    float rad  = 0;
+//    for (unsigned int i = 0; i < x_pos.size(); ++i){
+//        if (rad < sqrt(pow(x_pos[i] - x_pos[0],2) + pow(y_pos[i] - y_pos[0],2))
+//            +r_p){
+//            rad = sqrt(pow(x_pos[i] - x_pos[0],2) + pow(y_pos[i] - y_pos[0],2))
+//                  +r_p; 
+//        }
+//    }
+//    return rad;
+//}
 
 void startWalker(float &walker_x_pos, float &walker_y_pos, int D_max,
                  std::vector<float> &x_pos, std::vector<float> &y_pos,
                  float theta, double pi, float r_p, float &r_c){
-    float circ_rad = r_c + D_max;
+// Gives the walking particle a place to start. This is done by choosing a
+// radius (see the circ_rad), and the placis the walker somewhere along the 
+// perimeter of the circle corresponding to this radius. 
+    float circ_rad = r_c + 2*D_max;
     walker_x_pos = x_pos[0] + circ_rad*cos(theta);
     walker_y_pos = y_pos[0] + circ_rad*sin(theta);
-//    walker_x_pos = circ_rad*cos(theta);
-//    walker_y_pos = circ_rad*sin(theta);
 }
 
-float updateCluster(std::vector<std::vector<int>> &on_lattice_cluster,
+void updateCluster(std::vector<std::vector<int>> &on_lattice_cluster,
                    std::vector<std::vector<int>> &on_lattice_distance,
                    std::vector<float> &x_pos, std::vector<float> &y_pos,
                    float walker_x_pos, float walker_y_pos, int D_max,
-                   int sys_len, float &r_c){
+                   int sys_len, float &r_c, float r_p){
+// A function that updates the relevant quantities when a new particle attaches
+// to the cluster. Note that it also updates the radius of the cluster if the 
+// new particle is the one furthest from the centre.
     x_pos.push_back(walker_x_pos);
     y_pos.push_back(walker_y_pos);
     on_lattice_cluster[floor(walker_y_pos)][floor(walker_x_pos)] = x_pos.size();
     neighbourDist(on_lattice_distance, D_max, floor(walker_y_pos),
                   floor(walker_x_pos), sys_len);
     float tmp = std::sqrt(std::pow(walker_x_pos - x_pos[0],2) + 
-                          std::pow(walker_y_pos - y_pos[0],2));
+                          std::pow(walker_y_pos - y_pos[0],2))+r_p;
     if (tmp > r_c){
         r_c = tmp;
     } 
-    return r_c;
 }
 
 float findD_wc(float walker_x_pos, float walker_y_pos, int D_max,
@@ -425,7 +446,7 @@ bool killParticle(float walker_x_pos, float walker_y_pos,
                   std::vector<float> &x_pos, std::vector<float> &y_pos,
                   float r_p, float &r_c){
     if (sqrt(pow(walker_x_pos-x_pos[0],2) + pow(walker_y_pos-y_pos[0],2)) >= 
-             3.0*(r_c+1)){ // 3 should be 5 i paper
+             5.0*(r_c+1)){ // 3 should be 5 i paper
     return true;
     }
     else {
@@ -469,9 +490,9 @@ bool createStep(float &step_L, float step_dir,float &walker_x_pos,
         if (step_L < step_org){
             walker_x_pos += step_L*std::cos(step_dir);
             walker_y_pos += step_L*std::sin(step_dir);
-            r_c = updateCluster(on_lattice_cluster, on_lattice_distance,
+            updateCluster(on_lattice_cluster, on_lattice_distance,
                           x_pos, y_pos, walker_x_pos,walker_y_pos, D_max,
-                          sys_len, r_c);
+                          sys_len, r_c, r_p);
             return true;
         }
         else {
@@ -510,8 +531,8 @@ void runAll(float &step_L, float &step_dir, std::mt19937::result_type seed,
 
     auto rand_dir = std::bind(std::uniform_real_distribution<float>(0,2*pi),
 				   std::mt19937(seed));
-    bool hit = false;
-    bool kill = false;
+//    bool hit = false;
+//    bool kill = false;
     while (x_pos.size() < nbr_particles){
         startWalker(walker_x_pos, walker_y_pos, D_max, x_pos, y_pos, rand_dir(),
                     pi, r_p, r_c);
@@ -542,25 +563,18 @@ void writeGrid(std::vector<float> &x_pos, std::vector<float> &y_pos, float r_p){
     out_stream.close( );
 }
 
-void plotGnuplot(int &arr_len){
+void plotGnuplot(int &arr_len, float d_f, float nbr){
+    nbr = nbr/1000000;
     std::ofstream out_stream;
 	out_stream.open("gnuplotter.gnu");
     out_stream << "set terminal png size 1200,1000"
                   " enhanced font \"Helvetica,12\" " << std::endl;
-	out_stream << "set output \"figures/dla.png\" " << std::endl;
-	out_stream << "set xlabel \"x-dim\" " << std::endl;
-	out_stream << "set ylabel \"y-dim\"" << std::endl;
-	out_stream << "set xrange [0:" << arr_len << "]" << std::endl;
-	out_stream << "set yrange [0:" << arr_len << "]" << std::endl;
+	out_stream << "set output \"figures/" << nbr << "_(" << d_f << ").png\" "
+               << std::endl;
+    out_stream << "unset key; unset tics; unset border" << std::endl;
 	out_stream << "plot \"data/dla.txt\" with circles fc rgb \"navy\" "
                   "fill solid " << std::endl;
 	system("gnuplot gnuplotter.gnu");
-}
-
-
-float findFractalDim(std::vector<float> x_pos, std::vector<float> y_pos,
-                     float r_p, float &r_c){
-    return log(x_pos.size())/log(r_c);
 }
 
 void printDistances(std::vector<float> &x_pos, std::vector<float> &y_pos,
@@ -581,3 +595,85 @@ void printDistances(std::vector<float> &x_pos, std::vector<float> &y_pos,
     std::cout << "len Shorter = " << shorter.size() << std::endl;
 }
 
+void findCM(std::vector<float> x_pos, std::vector<float> y_pos, float &x_CM,
+            float &y_CM, unsigned int j){
+    float x_sum = 0;
+    float y_sum = 0;
+    for (unsigned int i = 0; i < j; ++i){
+        x_sum += x_pos[i];
+        y_sum += y_pos[i];
+    }
+    x_CM = x_sum/j;
+    y_CM = y_sum/j;
+}
+
+float findRG(std::vector<float> x_pos, std::vector<float> y_pos, float x_CM,
+             float y_CM, unsigned int j){
+    float sum = 0;
+    for (unsigned int i = 0; i < j; ++i){
+        sum += std::sqrt(pow(x_pos[i]-x_CM,2) + pow(y_pos[i]-y_CM,2));
+    }
+    return (1.0/j)*sum;
+}
+
+void fit(std::vector<float> x_pos, std::vector<float> y_pos,
+         std::vector<float> &R_g_vec, std::vector<float> &nbr_particles_vec,
+         float &x_CM, float &y_CM, int nbr_particles){
+    for (unsigned int j = 100; j <= nbr_particles; j = j*2){
+        findCM(x_pos, y_pos, x_CM, y_CM, j);
+        R_g_vec.push_back(std::log(findRG(x_pos, y_pos, x_CM, y_CM, j)));
+        nbr_particles_vec.push_back(std::log(j));
+    }
+}
+
+void writeFractalDim(std::vector<float> R_g_vec,
+                     std::vector<float> nbr_particles_vec){
+    std::ofstream out_stream;
+    out_stream.open("data/loglog.txt");
+    for (unsigned int i = 0; i < R_g_vec.size(); ++i){
+        out_stream << R_g_vec[i]  << " "
+                   << nbr_particles_vec[i] << std::endl;
+    }
+    out_stream.close( );
+
+}
+
+void plotLogLog(float d_f){
+    std::ofstream out_stream;
+	out_stream.open("gnuplotter.gnu");
+    out_stream << "f(x) = a*x+b" << std::endl;
+    out_stream << "fit f(x) \'data/loglog.txt\' u 1:2 via a,b" << std::endl;
+    out_stream << "set terminal png size 1200,1000"
+                  " enhanced font \"Helvetica,12\" " << std::endl;
+	out_stream << "set output \"figures/loglog(" << d_f << ").png\" "
+               << std::endl;
+	out_stream << "set xlabel \"log(N) \" " << std::endl;
+	out_stream << "set ylabel \"log(R_g)\"" << std::endl;
+	out_stream << "set xrange [0:10]" << std::endl;
+	out_stream << "set yrange [0:15]" << std::endl;
+    out_stream << "title_f(a,b) = sprintf('f(x) = %.2fx + %.2f', a, b)"
+               << std::endl;
+//	out_stream << "plot \"data/loglog.txt\", \"data/slope.txt\" with lines"
+//               << std::endl;
+    out_stream << "plot \"data/loglog.txt\" u 1:2, f(x)" << std::endl;
+	system("gnuplot gnuplotter.gnu");
+}
+
+float slope(std::vector<float> &x, std::vector<float> &y){
+    const auto n    = x.size();
+    const auto s_x  = std::accumulate(x.begin(), x.end(), 0.0);
+    const auto s_y  = std::accumulate(y.begin(), y.end(), 0.0);
+    const auto s_xx = std::inner_product(x.begin(), x.end(), x.begin(), 0.0);
+    const auto s_xy = std::inner_product(x.begin(), x.end(), y.begin(), 0.0);
+    const auto a    = (n * s_xy - s_x * s_y) / (n * s_xx - s_x * s_x);
+    return a;
+}
+
+void writeSlope(float d_f, std::vector<float> nbr_particles_vec){
+    std::ofstream out_stream;
+    out_stream.open("data/slope.txt");
+    for (unsigned int i = 0; i < nbr_particles_vec.size(); ++i){
+        out_stream << i << d_f*i << std::endl;
+    }
+    out_stream.close( );
+}

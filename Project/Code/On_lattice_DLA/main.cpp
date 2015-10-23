@@ -10,8 +10,8 @@ using namespace std;
 
 int main(){
 //----------------Parameter section. Declare your parameters here:------------
-	int arr_size = 51; //must be an odd number
-	int nbr_particles = 150;
+	int arr_size = 75; //must be an odd number
+	int nbr_particles = 400;
 	
 	int perimeter = 4*(arr_size-1)-1;
 	vector<vector<int>> grid;

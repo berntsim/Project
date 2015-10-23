@@ -28,11 +28,11 @@ void startWalker(float &walker_x_pos, float &walker_y_pos, int D_max,
                  std::vector<float> &x_pos, std::vector<float> &y_pos,
                  float theta, double pi, float r_p, float &r_c);
 
-float updateCluster(std::vector<std::vector<int>> &on_lattice_cluster,
+void updateCluster(std::vector<std::vector<int>> &on_lattice_cluster,
                    std::vector<std::vector<int>> &on_lattice_distance,
                    std::vector<float> &x_pos, std::vector<float> &y_pos,
                    float walker_x_pos, float walker_y_pos, int D_max,
-                   int sys_len, float &r_c);
+                   int sys_len, float &r_c, float r_p);
 
 float findD_wc(float walker_x_pos, float walker_y_pos, int D_max,
               std::vector<std::vector<int>> &on_lattice_distance);
@@ -63,10 +63,21 @@ void runAll(float &step_L, float &step_dir, std::mt19937::result_type seed,
 
 void writeGrid(std::vector<float> &x_pos, std::vector<float> &y_pos, float r_p);
 
-void plotGnuplot(int &arr_len);
+void plotGnuplot(int &arr_len, float d_f, float nbr_particles);
 
-float findFractalDim(std::vector<float> x_pos, std::vector<float> y_pos,
-                     float r_p, float &r_c);
+void findCM(std::vector<float> x_pos, std::vector<float> y_pos, float &x_CM,
+            float &y_CM, unsigned int j);
 
+float findRG(std::vector<float> x_pos, std::vector<float> y_pos, float x_CM,
+             float y_CM, unsigned int j);
 
+void fit(std::vector<float> x_pos, std::vector<float> y_pos,
+         std::vector<float> &R_g_vec, std::vector<float> &nbr_particles_vec,
+         float &x_CM, float &y_CM, int nbr_particles);
 
+void writeFractalDim(std::vector<float> R_g_vec,
+                     std::vector<float> nbr_particles_vec);
+
+void plotLogLog(float d_f);
+
+float slope(std::vector<float> &x, std::vector<float> &y);

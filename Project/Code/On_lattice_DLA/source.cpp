@@ -223,7 +223,7 @@ void plotGnuplot(int &arr_len){
 	out_stream << "set ylabel \"y-dim\"" << endl;
 	out_stream << "set xrange [0:" << arr_len << "]" << endl;
 	out_stream << "set yrange [0:" << arr_len << "]" << endl;
-	out_stream << "plot \"data/test.txt\" with points pointtype 16" << endl;
+	out_stream << "plot \"data/test.txt\" with points pointtype 15" << endl;
 	system("gnuplot gnuplotter.gnu");
 }
 

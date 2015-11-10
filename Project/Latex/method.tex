@@ -48,3 +48,42 @@ Throughout the process, the walking particle will take steps depending on its di
 The particle will attach to the cluster iff the step performed is shorter than $L_{min}$. Then $\textbf{A}$,$\textbf{B}$ and $\textbf{C}$ are updated, and a new particle starts walking. A new walker is launched from the starting distance $R_{start}$, and this process is repeated until the cluster contains the desired amount of particles. 
 
 From the aggregated cluster, the fractal dimension $d_f$ was calculated using a fit of the data to equation \eqref{eq:N_Rg_rel}. 
+
+
+\subsection{Diffusion limited cluster aggregation}
+The algortihm for Diffusion limited cluster aggregation has been developed for this project. It is inspired by the concepts of Kuijpers et. al. \cite{Kuijpers2014841}. However, the speed up in the off-lattice DLA algorithm has \textcolor{red}{NOT YET} been implemented, as it is not as straight forward to keep track of distances between clusters and the orientation of clusters/particles. This is also due to the fact that all clusters will perform a random walk throughout the simulation. 
+
+So to begin with, one starts out with a density of interest and distributes this over a domain. These are distributed randomly \textcolor{red}{(uniformly at the moment)} within a given domain size. For simplicity, one uses periodical boundary conditions. The positions of the particles are stored in a dynamical array $clusters$, as seen in figure \ref{fig:clusters_schematics} and \ref{fig:clusters_example_schematic}. The labels of the clusters correspond to the column number of $clusters$, and are stored in the enumerated grid $num\_grid$ (see figure \ref{fig:num_grid_example}). 
+
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics[width = 0.4\textwidth]{fig/clusters_schematics.png}
+		\caption{Schematic of the structure of the clusters array. Note that the dimension is not $N \times N$, but is rather dynamic int the sense that neither axis are static. The subscript $c$ indicates the label for the cluster, while $n$ denotes the particle number within a cluster $c$.}
+		\label{fig:clusters_schematics}
+	\end{center}
+\end{figure}
+
+\begin{figure}[h]
+	\begin{center}
+		\begin{subfigure}[t]{0.3\textwidth}
+			\includegraphics[width = \textwidth]{fig/example.png}
+			\caption{Example of how a configuration would look.}
+			\label{fig:example}
+		\end{subfigure}
+		\begin{subfigure}[t]{0.3\textwidth}
+			\includegraphics[width = \textwidth]{fig/num_grid_example.png}
+			\caption{Example of how the enumerated grid would look.  }
+			\label{fig:num_grid_example}
+		\end{subfigure}
+		\begin{subfigure}[t]{0.3\textwidth}
+			\includegraphics[width = \textwidth]{fig/clusters_example_schematic}
+			\caption{Example of how the clusters array would look. }
+			\label{fig:clusters_example_schematic}
+		\end{subfigure}
+		\caption{Example of how the data structures would look.}
+		\label{fig:arrays}
+	\end{center}
+\end{figure}
+
+This storage system allows for easy checks to see if a particle has any neighbours \textcolor{red}{(at the moment only nearest neighbours)}, which may allow for a hit. In the event that a hit happens, the two clusters will join together and form a new cluster. In this case both arrays has to be updated, making sure the labelling of the new cluster is correct. For conventional purposes, the new cluster will always have the label as the lowest cluster comming in. This means if cluster 2 collides with cluster 6, the new cluster will keep label 2 while 6 is erased. All clusters with label higher than 6 will then have their label reduced by 1. After some while, one might have a situation similar to that shown in figure \ref{fig:example}.

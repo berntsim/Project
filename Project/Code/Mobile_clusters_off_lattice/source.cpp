@@ -54,20 +54,18 @@ void walkOnGrid(std::vector<std::vector<std::complex<double>>> &clusters,
                 std::vector<std::vector<int>> &num_grid_C,
                 std::vector<std::vector<int>> &num_grid_N,
                 std::mt19937::result_type seed, float L_step, double pi,
-                float r_p, int &counter){
+                float r_p, int &counter, double D, double dt,
+                int nbr_particles){
     int row, col;
     int len = num_grid_C.size();
-    double X, Y, nextX, nextY, step_dir, L_min, L_org, x_c, y_c, x_1, y_1;
+    double X, Y, nextX, nextY, step_dir, L_min, x_c, y_c, x_1, y_1;
     int has_hit_number = 0;
     bool has_hit = false;
     bool can_move = false;
-    //auto rand_dir_int = std::bind(std::uniform_real_distribution<float>(0,4),
-	//                std::mt19937(seed));
     auto rand_dir = std::bind(std::uniform_real_distribution<double>(0,2*pi),
 				   std::mt19937(seed));
-    L_org = L_step;
     for (int i = 1; i < clusters.size(); ++i){
-        L_step = L_org;
+        L_step = findStepLength(D, dt, clusters[i].size(), nbr_particles);
         can_move = true;
         L_min = L_step;
         has_hit_number = 0;
@@ -96,7 +94,7 @@ void walkOnGrid(std::vector<std::vector<std::complex<double>>> &clusters,
                 if (num_grid_C[X][Y] !=
                     num_grid_C[floor(real(to_check[k]))]
                               [floor(imag(to_check[k]))]){
-                    L_step = LHit(L_step, step_dir, x_c, y_c , X, Y, r_p);
+                    L_step = LHit(L_step, step_dir, x_c, y_c , x_1, y_1, r_p);
                 }
                 if (L_step < L_min){
                     L_min = L_step;
@@ -105,7 +103,7 @@ void walkOnGrid(std::vector<std::vector<std::complex<double>>> &clusters,
                 }
             }
         }
-        std::vector<std::vector<int>> ngn_tmp = num_grid_N;        
+        std::vector<std::vector<int>> ngn_tmp = num_grid_N;
         for (int j = 0; j < moved_from.size(); ++j){
             makeStep(real(moved_from[j]), imag(moved_from[j]), step_dir, len,
                      L_min, nextX, nextY);
@@ -113,11 +111,9 @@ void walkOnGrid(std::vector<std::vector<std::complex<double>>> &clusters,
             updateClusters(clusters, i, j, nextX, nextY);
             updateNum_grid_C(num_grid_C, moved_to_labels, moved_from[j],
                             {nextX, nextY});
-            updateNum_grid_N(num_grid_N, ngn_tmp, real(moved_to_labels[j]),
-                             imag(moved_to_labels[j]), 
-                             real(moved_from_labels[j]),
-                             imag(moved_from_labels[j]));
         }
+        updateNum_grid_New(num_grid_N, ngn_tmp, moved_from_labels,
+                           moved_to_labels);
         num_grid_N = ngn_tmp;
         if (has_hit_number != 0){
             joinClusters(clusters, num_grid_C, i, has_hit_number, num_grid_N);
@@ -128,7 +124,7 @@ void walkOnGrid(std::vector<std::vector<std::complex<double>>> &clusters,
 
 void findShortestDist(int len, double &x_c, double &y_c, double &X, double &Y,
                       float r_p){
-    if (std::abs(X - x_c) > (len-1 - ceil(2*r_p))){
+    if (std::abs(X - x_c) > (len-(len/3.0) - ceil(2*r_p))){
         if (x_c > X){
             X = X + len;
         }
@@ -136,7 +132,7 @@ void findShortestDist(int len, double &x_c, double &y_c, double &X, double &Y,
             x_c = x_c + len;
         }
     }
-    if (std::abs(Y - y_c) > (len-1 - ceil(2*r_p))){
+    if (std::abs(Y - y_c) > (len-(len/3.0) - ceil(2*r_p))){
         if (y_c > Y){
             Y = Y + len;
         }
@@ -168,42 +164,51 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
                       int col, std::vector<std::complex<double>> &to_check,
                       float r_p){
     int A, B;
+    std::complex<double> check;
     if ((row - ceil(2*r_p) <= 0) && (col - ceil(2*r_p) <= 0)){
 //        std::cout << "6" << std::endl;
         A = row + ceil(2*r_p)+1;
         B = col + ceil(2*r_p)+1;
         for (int i = 0; i < A; ++i){
             for (int j = 0; j < B; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         for (int i = row + (len-1) - ceil(2*r_p); i < len; ++i){
             for (int j = col + (len-1) - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
-                }                
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
+                }
             }
         }
         A = row + ceil(2*r_p)+1;
         for (int i = 0; i < A; ++i){
             for (int j = col + (len-1) - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
-                } 
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
+                }
             }
         }
         B = col + ceil(2*r_p)+1;
         for (int i = row + (len-1) - ceil(2*r_p); i < len; ++i){
             for (int j = 0; j < B; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
-                } 
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
+                }
             }
         }
     }
@@ -211,9 +216,11 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
 //        std::cout << "4" << std::endl;
         for (int i = row - ceil(2*r_p); i < len; ++i){
             for (int j = col - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -221,27 +228,33 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
         B = ceil(2*r_p) + col - (len-1);
         for (int i = 0; i < A; ++i){
             for (int j = 0; j < B; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         B = ceil(2*r_p) + col - (len-1);
         for (int i = row - ceil(2*r_p); i < len; ++i){
            for (int j = 0; j < B; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         A = ceil(2*r_p) + row - (len-1);
         for (int i = 0; i < A; ++i){
             for (int j = col - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -251,34 +264,42 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
         A = row + ceil(2*r_p)+1;
         for (int i = 0; i < A; ++i){
             for (int j = col - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         B = col - (len-1) + ceil(2*r_p);
         for (int i = len-1; i > len - ceil(2*r_p); --i){
             for (int j = 0; j < B; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         for (int i = 0; i < row + ceil(2*r_p)+1; ++i){
             for (int j = 0; j < B; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         for (int i = len-1; i > len - ceil(2*r_p); --i){
             for (int j = col - ceil(2*r_p); j < len; ++j) {
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -288,35 +309,43 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
         B = col + ceil(2*r_p)+1;
         for (int i = row - ceil(2*r_p); i < len; ++i){
             for (int j = 0; j < B; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         for (int i = row - ceil(2*r_p); i < len; ++i){
             for (int j = col + (len-1) - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         A = ceil(2*r_p) + row - (len-1);
         for (int i = 0; i < A; ++i){
             for (int j = 0; j < col + ceil(2*r_p)+1; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         A = ceil(2*r_p) + row - (len-1);
         for (int i = 0; i < A; ++i){
             for (int j = col + (len-1) - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -326,18 +355,22 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
 //        std::cout << "0" << std::endl;
         for (int i = row - ceil(2*r_p); i < row + ceil(2*r_p)+1; ++i){
             for (int j = col - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         B = ceil(2*r_p) + col - (len-1);
         for (int i = row - ceil(2*r_p); i < row + ceil(2*r_p)+1; ++i){
             for (int j = 0; j < B; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -347,18 +380,22 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
 //        std::cout << "1" << std::endl;
         for (int i = row - ceil(2*r_p); i < len; ++i){
             for (int j = col - ceil(2*r_p); j < col + ceil(2*r_p)+1; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         A = ceil(2*r_p) + row - (len-1);
         for (int i = 0; i < A; ++i){
             for (int j = col - ceil(2*r_p); j < col + ceil(2*r_p)+1; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -368,17 +405,21 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
 //        std::cout << "2" << std::endl;
         for (int i = row - ceil(2*r_p); i < row + ceil(2*r_p)+1; ++i){
             for (int j = 0; j < col + ceil(2*r_p)+1; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         for (int i = row - ceil(2*r_p); i < row + ceil(2*r_p)+1; ++i){
             for (int j = col + (len-1) - ceil(2*r_p); j < len; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -389,17 +430,21 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
         A = row + ceil(2*r_p)+1;
         for (int i = 0; i < A; ++i){
             for (int j = col - ceil(2*r_p); j < col + ceil(2*r_p)+1; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
         for (int i = row + (len-1) - ceil(2*r_p); i < len; ++i){
             for (int j = col - ceil(2*r_p); j < col + ceil(2*r_p)+1; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -408,9 +453,11 @@ void checkDestination(std::vector<std::vector<std::complex<double>>> clusters,
 //        std::cout << "8" << std::endl;
         for (int i = row - ceil(2*r_p); i < row + ceil(2*r_p) + 1; ++i){
             for (int j = col - ceil(2*r_p); j < col + ceil(2*r_p) + 1; ++j){
-                if (num_grid_C[i][j] != 0){
-                    to_check.push_back(clusters[num_grid_C[i][j]]
-                                               [num_grid_N[i][j]]);
+                check = clusters[num_grid_C[i][j]][num_grid_N[i][j]];
+                if ((num_grid_C[i][j] != 0) &&
+                    (std::find(to_check.begin(), to_check.end(), check)
+                     == to_check.end())){
+                    to_check.push_back(check);
                 }
             }
         }
@@ -439,6 +486,25 @@ void updateNum_grid_N(std::vector<std::vector<int>> num_grid_N,
                       int rt, int ct, int rf, int cf){
     ngn_tmp[rf][cf] = 0;
     ngn_tmp[rt][ct] = num_grid_N[rf][cf];
+}
+
+void updateNum_grid_New(std::vector<std::vector<int>> num_grid_N,
+                      std::vector<std::vector<int>> &ngn_tmp,
+                      std::vector<std::complex<int>> mfl,
+                      std::vector<std::complex<int>> mtl){
+    std::complex<int> check;
+    for (int i = 0; i < mfl.size(); ++i){
+        check = mfl[i];
+        if (std::find(mtl.begin(), mtl.end(), check) != mtl.end()){
+            ngn_tmp[real(mtl[i])][imag(mtl[i])] = num_grid_N[real(mfl[i])]
+                                                            [imag(mfl[i])];
+        }
+        else {
+            ngn_tmp[real(mfl[i])][imag(mfl[i])] = 0;
+            ngn_tmp[real(mtl[i])][imag(mtl[i])] = num_grid_N[real(mfl[i])]
+                                                            [imag(mfl[i])];
+        }
+    }
 }
 
 void updateNum_gridWalk(std::vector<std::vector<int>> &num_grid,
@@ -499,27 +565,16 @@ float LHit(float step_L, double step_dir, double x_c, double y_c, double x_p,
     else {
         res[0] = (-b + sqrt(b*b - 4.0*a*c))/(2.0*a);
         res[1] = (-b - sqrt(b*b - 4.0*a*c))/(2.0*a);
-        if(std::abs(res[0]) < std::abs(res[1])){
-            if(res[0] < 0){
-                return step_L;
-            }
-            else if(std::abs(res[0]) < step_L){
-                return res[0];
-            }
-            else {
-                return step_L;
-            }
+        //std::cout << "res[0] = " << res[0] << std::endl;
+        //std::cout << "res[1] = " << res[1] << std::endl;
+        if ((res[0]<res[1]) && ((res[0]>0) && (res[0]<step_L))){
+            return res[0];
         }
-        else{
-            if(res[1] < 0) {
-                return step_L;
-            }
-            else if(std::abs(res[1]) < step_L){
-                return res[1];
-            }
-            else {
-                return step_L;
-            }
+        else if ((res[1]<res[0]) && ((res[1]>0) && (res[1]<step_L))){
+            return res[1];
+        }
+        else {
+            return step_L;
         }
     }
 }
@@ -530,7 +585,10 @@ void joinClusters(std::vector<std::vector<std::complex<double>>> &clusters,
     int C = std::min(A,B);
     int D = std::max(A,B);
     int row, col;
-    int org_size = clusters[C].size(); 
+    int org_size = clusters[C].size();
+    //std::cout << "C = " << C << std::endl;
+    //std::cout << "D = " << D << std::endl;
+    //std::cout << "clusters[D].size() = " << clusters[D].size() << std::endl;
     for (unsigned int i = 0; i < clusters[D].size(); ++i){
         row = floor(real(clusters[D][i]));
         col = floor(imag(clusters[D][i]));
@@ -578,13 +636,75 @@ void printDist(std::vector<std::vector<std::complex<double>>> clusters, int len,
             findShortestDist(len, x_c, y_c, X, Y, r_p);
             d = std::sqrt(pow(X - x_c, 2) +
                           pow(Y - y_c, 2));
-            std::cout << "d" << i+1 << "," << j+1 << " = " << d << "    ";
+            //std::cout << "d" << i+1 << "," << j+1 << " = " << d << "    ";
             //std::cout << tmp[i] << " -> " << tmp[j] << std::endl;
-            std::cout << "npbc" << i+1 << "," << j+1 << " = " << d1 << "    "
-                      << std::endl;
+            //std::cout << "npbc" << i+1 << "," << j+1 << " = " << d1 << "    "
+            //          << std::endl;
+            if ((d1 > 0.01) && (d1 < 1.99)){
+                std::cout << "npbc" << i+1 << "," << j+1 << " = " << d1 << "    "
+                          << std::endl;
+                std::cout << X << "," << Y << std::endl;
+            }
+            if ((d > 0.01) && (d < 1.99)){
+                std::cout << "d" << i+1 << "," << j+1 << " = " << d << std::endl;
+                std::cout << X << "," << Y << std::endl;
+            }
         }
     }
 }
+
+double findStepLength(double D, double dt, int S, int nbr_particles){
+    double dx = std::sqrt(D*2.0*dt) * double(nbr_particles)/double(S);
+    return dx;
+}
+
+void clustersTime(std::vector<std::vector<std::complex<double>>> clusters,
+                  int system_length){
+    std::ofstream out_stream;
+	out_stream.open("cluster_size_distribution(time).txt");
+    int max = 0;
+    for (int i = 0; i < clusters.size(); ++i){
+        if (max < clusters[i].size()){
+            max = clusters[i].size();
+        }
+    }
+    int N;
+    for (int s = 0; s < max+1; ++s){
+        N = 0;
+        for (int i = 0; i < clusters.size(); ++i){
+            if (clusters[i].size() == s){
+                N++;
+            }
+        }
+        out_stream << s << " " << double(N)/std::pow(double(system_length), 2.0)
+                   << std::endl;
+    }
+    out_stream.close( );
+}
+
+double clusterSize(std::vector<std::vector<std::complex<double>>> clusters,
+                 int s, int system_length){
+    int N = 0;
+    for (int i = 0; i < clusters.size(); ++i){
+        if (clusters[i].size() == s){
+            N++;
+        }
+    }
+    double n = double(N)/std::pow(double(system_length), 2.0);
+    return n;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -631,7 +751,7 @@ void writeConfig1(std::vector<std::vector<std::complex<double>>> clusters,
 void writeConfigTest(std::vector<std::vector<std::complex<double>>> clusters,
                  float r_p, int system_length, int iteration){
     std::ofstream out_stream;
-    std::string name = "data/" + std::to_string(iteration) + ".txt";
+    std::string name = "data/00" + std::to_string(iteration) + ".txt";
     out_stream.open(name);
     for (unsigned int i = 1; i < clusters.size(); ++i){
         for (unsigned int j = 0; j < clusters[i].size(); ++j){
@@ -667,14 +787,17 @@ void plotConfig(int system_length, std::string n){
                << std::endl;
     out_stream << "set xrange [0:" << system_length << "]" << std::endl;
     out_stream << "set yrange [0:" << system_length << "]" << std::endl;
-    out_stream << "set grid xtics lt 0 lw 1 lc rgb \"#000000\" " << std::endl;
-    out_stream << "set grid ytics lt 0 lw 1 lc rgb \"#000000\" " << std::endl;
+    //out_stream << "set grid xtics lt 0 lw 1 lc rgb \"#000000\" " << std::endl;
+    //out_stream << "set grid ytics lt 0 lw 1 lc rgb \"#000000\" " << std::endl;
     out_stream << "set style fill transparent solid 1.0 noborder" << std::endl;
     out_stream << "unset key" << std::endl;
-    out_stream << "set xtics 0, 1, " << system_length << std::endl;
-    out_stream << "set ytics 0, 1, " << system_length << std::endl;
-	out_stream << "plot \"data/00" << n << ".txt\" u 1:2:3:4 w circles palette,\
-                    \"data/00" << n << ".txt\" " << std::endl;
+    //out_stream << "set xtics 0, 1, " << system_length << std::endl;
+    //out_stream << "set ytics 0, 1, " << system_length << std::endl;
+//	out_stream << "plot \"data/00" << n << ".txt\" u 1:2:3:4 w circles palette,\
+//                    \"data/00" << n << ".txt\" " << std::endl;
+//    out_stream << "plot \"data/00" << n << ".txt\" w circles fc rgb \"navy\" "
+	out_stream << "plot \"data/00" << n << ".txt\" u 1:2:3:4 w circles palette"
+               << std::endl;
 	system("gnuplot gnuplotter.gnu");
 }
 
@@ -728,6 +851,7 @@ void writeSeed(std::mt19937::result_type seed){
     out_stream.open("seed.txt");
     out_stream << seed << std::endl;
     out_stream.close( );
+    std::cout << "writeSeed OK!" << std::endl;
 
 }
 

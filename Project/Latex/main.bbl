@@ -1,26 +1,39 @@
 \begin{thebibliography}{1}
 
+\bibitem{PhysRevLett.47.1400}
+T.~A. Witten and L.~M. Sander.
+\newblock Diffusion-limited aggregation, a kinetic critical phenomenon.
+\newblock {\em Phys. Rev. Lett.}, 47:1400--1403, Nov 1981.
+
 \bibitem{eden1961}
-{\sc Eden, M.}
+Murray Eden.
 \newblock A two-dimensional growth process.
 \newblock In {\em Proceedings of the Fourth Berkeley Symposium on Mathematical
   Statistics and Probability, Volume 4: Contributions to Biology and Problems
-  of Medicine\/} (Berkeley, Calif., 1961), University of California Press,
-  pp.~223--239.
+  of Medicine}, pages 223--239, Berkeley, Calif., 1961. University of
+  California Press.
 
-\bibitem{Kuijpers2014841}
-{\sc Kuijpers, K.~R., de~Martín, L., and van Ommen, J.~R.}
-\newblock Optimizing off-lattice diffusion-limited aggregation.
-\newblock {\em Computer Physics Communications 185}, 3 (2014), 841 -- 846.
+\bibitem{PhysRevLett.51.1119}
+Paul Meakin.
+\newblock Formation of fractal clusters and networks by irreversible
+  diffusion-limited aggregation.
+\newblock {\em Phys. Rev. Lett.}, 51:1119--1122, Sep 1983.
 
 \bibitem{PhysRevLett.52.1669}
-{\sc Vicsek, T., and Family, F.}
+Tam\'as Vicsek and Fereydoon Family.
 \newblock Dynamic scaling for aggregation of clusters.
-\newblock {\em Phys. Rev. Lett. 52\/} (May 1984), 1669--1672.
+\newblock {\em Phys. Rev. Lett.}, 52:1669--1672, May 1984.
 
-\bibitem{PhysRevLett.47.1400}
-{\sc Witten, T.~A., and Sander, L.~M.}
-\newblock Diffusion-limited aggregation, a kinetic critical phenomenon.
-\newblock {\em Phys. Rev. Lett. 47\/} (Nov 1981), 1400--1403.
+\bibitem{acpd-15-2487-2015}
+B.~V. Scarnato, S.~China, K.~Nielsen, and C.~Mazzoleni.
+\newblock Perturbations of the optical properties of mineral dust particles by
+  mixing with black carbon: a numerical simulation study.
+\newblock {\em Atmospheric Chemistry and Physics Discussions},
+  15(2):2487--2533, 2015.
+
+\bibitem{Kuijpers2014841}
+Kasper~R. Kuijpers, Lilian de~Martín, and J.~Ruud van Ommen.
+\newblock Optimizing off-lattice diffusion-limited aggregation.
+\newblock {\em Computer Physics Communications}, 185(3):841 -- 846, 2014.
 
 \end{thebibliography}

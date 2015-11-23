@@ -16,9 +16,11 @@ void initGrid(int system_length, std::mt19937::result_type seed,
 //radius r_p, and they may not overlap or tang
 
 void walkOnGrid(std::vector<std::vector<std::complex<double>>> &clusters,
-                std::vector<std::vector<int>> &num_grid,
+                std::vector<std::vector<int>> &num_grid_C,
+                std::vector<std::vector<int>> &num_grid_N,
                 std::mt19937::result_type seed, float L_step, double pi,
-                float r_p, int &counter);
+                float r_p, int &counter, double D, double dt,
+                int nbr_particles);
 
 void findShortestDist(int len, double &x_c, double &y_c, double &X, double &Y,
                       float r_p);
@@ -50,6 +52,11 @@ void updateNum_grid_N(std::vector<std::vector<int>> num_grid_N,
                       std::vector<std::vector<int>> &ngn_tmp,
                       int rt, int ct, int rf, int cf);
 
+void updateNum_grid_New(std::vector<std::vector<int>> num_grid_N,
+                      std::vector<std::vector<int>> &ngn_tmp,
+                      std::vector<std::complex<int>> mfl,
+                      std::vector<std::complex<int>> mtl);
+
 void updateNum_gridWalk(std::vector<std::vector<int>> &num_grid,
                         std::complex<double> f,
                         std::complex<double> t,
@@ -70,6 +77,15 @@ void joinClusters(std::vector<std::vector<std::complex<double>>> &clusters,
 
 void updateNum_grid(std::vector<std::vector<int>> &num_grid, int start,
                     std::vector<std::vector<std::complex<double>>> clusters);
+
+double findStepLength(double D, double dt, int S, int nbr_particles);
+
+void clustersTime(std::vector<std::vector<std::complex<double>>> clusters,
+                  int system_length);
+
+double clusterSize(std::vector<std::vector<std::complex<double>>> clusters,
+                 int s, int system_length);
+
 
 
 

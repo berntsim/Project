@@ -1,10 +1,12 @@
 \contentsline {section}{\numberline {1}Introduction}{1}{section.1}
 \contentsline {section}{\numberline {2}Theory}{2}{section.2}
 \contentsline {subsection}{\numberline {2.1}Fractal dimension}{2}{subsection.2.1}
-\contentsline {subsection}{\numberline {2.2}Family-Vicsek scaling}{3}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.2}Family-Vicsek scaling}{2}{subsection.2.2}
 \contentsline {section}{\numberline {3}Method}{4}{section.3}
-\contentsline {subsection}{\numberline {3.1}On-lattice DLA}{4}{subsection.3.1}
-\contentsline {subsection}{\numberline {3.2}Off-lattice DLA}{5}{subsection.3.2}
-\contentsline {subsection}{\numberline {3.3}Diffusion limited cluster aggregation}{7}{subsection.3.3}
-\contentsline {section}{\numberline {4}Results}{8}{section.4}
-\contentsline {section}{\numberline {A}References}{9}{appendix.A}
+\contentsline {subsection}{\numberline {3.1}Diffusion limited aggregation}{4}{subsection.3.1}
+\contentsline {subsubsection}{\numberline {3.1.1}On-lattice DLA}{4}{subsubsection.3.1.1}
+\contentsline {subsubsection}{\numberline {3.1.2}Off-lattice DLA}{5}{subsubsection.3.1.2}
+\contentsline {subsection}{\numberline {3.2}Diffusion limited cluster aggregation}{8}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}To do}{11}{subsection.3.3}
+\contentsline {section}{\numberline {4}Results}{12}{section.4}
+\contentsline {section}{\numberline {A}References}{15}{appendix.A}

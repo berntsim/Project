@@ -11,8 +11,8 @@
 using namespace std;
 int main(){
 //---------------------------------Parameters-----------------------------------
-    int nbr_particles = 1000;         //Number of particles we want in the syst.
-    int system_length = 100;         //Dimension of the array used for the syst.
+    int nbr_particles = 25000;         //Number of particles we want in the syst.
+    int system_length = 400;         //Dimension of the array used for the syst.
     float r_p = 0.5;                //Radius of the particles.
     float L_min = 1.0;              //Minimum step corresponding to rand. walk.
     double pi = 3.1415926535897932384626433832; // Declaring pi.
@@ -22,6 +22,9 @@ int main(){
     int counter = 0;
     int counter2 = 0;
     int len = system_length - 1;
+    int s = 10;
+    double dt = 0;
+    double t = 0;
 
     nbr_particles++;
     std::vector<std::vector<complex<double>>> clusters(nbr_particles,
@@ -43,13 +46,21 @@ int main(){
 //    writeConfigTest(clusters, r_p, system_length, 0);
 //    plot(system_length, std::to_string(0));
     std::cout << "starting the walk" << std::endl;
-    int iteration_len = 100;
-    for (int i = 0; i < iteration_len; ++i){
-        std::cout << i << std::endl;
-        writeConfigColor(clusters, r_p, system_length, i);    
-        plotConfig(system_length, std::to_string(i));
+    //int iteration_len = 100;
+    std::ofstream out_stream;
+	out_stream.open("cluster_size_distribution.txt");
+    //for (int i = 0; i < iteration_len; ++i){
+    while ( t < 0.1){    
+        std::cout << "t = " << t << std::endl;
+        out_stream << t << " " << clusterSize(clusters, s, system_length)
+                   << std::endl;
+        t += double(s)/double(nbr_particles);
+        std::cout << double(s)/double(nbr_particles) << std::endl;
+        writeConfigColor(clusters, r_p, system_length, t);    
+        plotConfig(system_length, std::to_string(t));
         walkOnGrid(clusters, num_grid, rand_seed(), L_min, pi, r_p, counter);
     }
+    clustersTime(clusters, system_length);
     std::cout << "counter = " << counter << std::endl;
     std::cout << "#clusters = " << clusters.size()-1 << std::endl;
 //    walkOnGrid(clusters, num_grid, rand_seed(), L_min, pi, r_p, counter);

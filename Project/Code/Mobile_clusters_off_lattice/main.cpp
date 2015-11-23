@@ -11,16 +11,22 @@
 using namespace std;
 int main(){
 //---------------------------------Parameters-----------------------------------
-    int nbr_particles = 15;         //Number of particles we want in the syst.
-    int system_length = 10;         //Dimension of the array used for the syst.
+    int nbr_particles = 1000;         //Number of particles we want in the syst.
+    int system_length = 100;         //Dimension of the array used for the syst.
     float r_p = 1.0;                //Radius of the particles.
-    float L_min = 0.5;              //Minimum step corresponding to rand. walk.
+    float L_min = 1.0;              //Minimum step corresponding to rand. walk.
     double pi = 3.1415926535897932384626433832; // Declaring pi.
     bool hit = false;
     int i_max = std::numeric_limits<int>::max();
     int counter = 0;
+    int i = 0;
     int counter2 = 0;
     int len = system_length - 1;
+    double D = 0.000001;
+    double dt = 0.01;
+    double t = 0;
+    int s = 3;
+    int iteration_length = 10;
 
     nbr_particles++;
     std::vector<std::vector<complex<double>>> clusters(nbr_particles,
@@ -31,8 +37,8 @@ int main(){
     std::vector<std::vector<int>> num_grid_N(system_length,
                                            std::vector<int>(system_length));
 //------------------------------Seeding MT RNG----------------------------------
-    //std::mt19937::result_type seed = time(0);
-    std::mt19937::result_type seed = 1447081009;
+    std::mt19937::result_type seed = time(0);
+    //std::mt19937::result_type seed = 1447952689;
     writeSeed(seed);
     auto rand_dir = std::bind(std::uniform_real_distribution<float>(0,2*pi),
 				   std::mt19937(seed));
@@ -41,26 +47,27 @@ int main(){
 //-------------------------------Running prog.----------------------------------
     initGrid(system_length, rand_seed(), nbr_particles, r_p,
              clusters, num_grid_C, num_grid_N);
-//    printNumGrid(num_grid_C);
-//    printClusters(clusters);
-    writeConfigTest(clusters, r_p, system_length, 0);
-    writeConfig(clusters, r_p);
-    writeConfigColor(clusters, r_p, system_length, 0);
-    plotConfig(system_length, std::to_string(0)); 
-    std::cout << "clusters.size() = " << clusters.size()-1 << std::endl;
-    for (int i = 1; i < 4; ++i){
-        std::cout << std::endl;
-        std::cout << "Iteration number " << i << std::endl;
-        std::cout << "number of clusters = " << clusters.size()-1 << std::endl;
-        walkOnGrid(clusters, num_grid_C, num_grid_N, rand_seed(), L_min, pi, r_p,
-                   counter);
+    std::ofstream out_stream;
+    out_stream.open("cluster_size_distribution.txt");
+    for (int i = 0; i < iteration_length; ++i){
         writeConfigColor(clusters, r_p, system_length, i);    
         plotConfig(system_length, std::to_string(i));
+        out_stream << t << " " << clusterSize(clusters, s, system_length)
+                   << std::endl;
+        std::cout << std::endl;
+        std::cout << "Iteration number " << i << std::endl;
+        std::cout << " t = " << t << std::endl;
+        std::cout << "number of clusters = " << clusters.size()-1 << std::endl;
+        walkOnGrid(clusters, num_grid_C, num_grid_N, rand_seed(), L_min, pi, r_p,
+                   counter, D, dt, nbr_particles);
+        t += dt;
     }
     std::cout << "clusters.size() = " << clusters.size()-1 << std::endl;
-    writeConfig1(clusters, r_p, system_length);
-    plotConfigTest(system_length, 0, 1);
+    clustersTime(clusters, system_length);
+    writeConfigColor(clusters, r_p, system_length, iteration_length);    
+    plotConfig(system_length, std::to_string(iteration_length));
 //-------testing section--------
+//    std::cout << "dx(10) = " << findStepLength(D, dt, 10, nbr_particles) << std::endl;
     return 0;
 }
 

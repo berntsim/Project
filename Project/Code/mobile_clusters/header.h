@@ -87,6 +87,11 @@ void joinInit(std::vector<std::vector<std::complex<double>>> &clusters,
 void updateNum_grid(std::vector<std::vector<int>> &num_grid, int start,
                     std::vector<std::vector<std::complex<double>>> clusters);
 
+double clusterSize(std::vector<std::vector<std::complex<double>>> clusters,
+                 int s, int system_length);
+
+void clustersTime(std::vector<std::vector<std::complex<double>>> clusters,
+                  int system_length);
 
 
 
@@ -105,7 +110,7 @@ void writeConfig1(std::vector<std::vector<std::complex<double>>> clusters,
                  float r_p, int system_length);
 
 void writeConfigColor(std::vector<std::vector<std::complex<double>>> clusters,
-                 float r_p, int system_length, int iteration);
+                 float r_p, int system_length, double iteration);
 
 void plotConfig(int iteration, int system_length);
 

@@ -644,7 +644,7 @@ void plotLogLog(float d_f){
     out_stream << "f(x) = a*x+b" << std::endl;
     out_stream << "fit f(x) \'data/loglog.txt\' u 1:2 via a,b" << std::endl;
     out_stream << "set terminal png size 1200,1000"
-                  " enhanced font \"Helvetica,12\" " << std::endl;
+                  " enhanced font \"Helvetica,30\" " << std::endl;
 	out_stream << "set output \"figures/loglog(" << d_f << ").png\" "
                << std::endl;
 	out_stream << "set xlabel \"log(N) \" " << std::endl;
@@ -655,7 +655,8 @@ void plotLogLog(float d_f){
                << std::endl;
 //	out_stream << "plot \"data/loglog.txt\", \"data/slope.txt\" with lines"
 //               << std::endl;
-    out_stream << "plot \"data/loglog.txt\" u 1:2, f(x)" << std::endl;
+    out_stream << "plot \"data/loglog.txt\" u 1:2 title = \"data points\", \
+                   f(x) tite = \"curve fit\" " << std::endl;
 	system("gnuplot gnuplotter.gnu");
 }
 

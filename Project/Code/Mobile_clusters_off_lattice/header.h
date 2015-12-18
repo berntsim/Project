@@ -86,6 +86,26 @@ void clustersTime(std::vector<std::vector<std::complex<double>>> clusters,
 double clusterSize(std::vector<std::vector<std::complex<double>>> clusters,
                  int s, int system_length);
 
+void corAlpha(float &L_step, double &step_dir, int len,
+              std::vector<std::complex<double>> c);
+
+void findCM(double &x_cm, double &y_cm, std::vector<std::complex<double>> c);
+
+void refill(std::vector<std::vector<std::complex<double>>> &clusters,
+            std::vector<std::vector<int>> &num_grid_C,
+            std::vector<std::vector<int>> num_grid_N,
+            std::mt19937::result_type seed, int len, float r_p,  int amount);
+
+double findSingleDist(double X, double Y, double x_c, double y_c);
+
+void fallOut(std::vector<std::vector<std::complex<double>>> &clusters,
+            std::vector<std::vector<int>> &num_grid_C,
+            std::vector<std::vector<int>> &num_grid_N, int cut_off,
+            std::vector<int> &amounts, int &out_counter, int &cluster_sum,
+            int &counter_sum);
+
+void FLC(std::vector<std::vector<std::complex<double>>> &clusters);
+
 
 
 

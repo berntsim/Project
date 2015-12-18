@@ -65,11 +65,12 @@ void walkOnGrid(std::vector<std::vector<std::complex<double>>> &clusters,
     auto rand_dir = std::bind(std::uniform_real_distribution<double>(0,2*pi),
 				   std::mt19937(seed));
     for (int i = 1; i < clusters.size(); ++i){
+        step_dir = rand_dir();
         L_step = findStepLength(D, dt, clusters[i].size(), nbr_particles);
+        //corAlpha(L_step, step_dir, len, clusters[i]);
         can_move = true;
         L_min = L_step;
         has_hit_number = 0;
-        step_dir = rand_dir();
         std::vector<std::complex<double>> moved_from;
         std::vector<std::complex<double>> to_check;
         std::vector<std::complex<int>> moved_from_labels;
@@ -654,7 +655,8 @@ void printDist(std::vector<std::vector<std::complex<double>>> clusters, int len,
 }
 
 double findStepLength(double D, double dt, int S, int nbr_particles){
-    double dx = std::sqrt(D*2.0*dt) * double(nbr_particles)/double(S);
+    double dx = std::sqrt(D*2.0*dt) * double(nbr_particles)*
+                                      std::pow(double(S),-1.0);
     return dx;
 }
 
@@ -694,11 +696,114 @@ double clusterSize(std::vector<std::vector<std::complex<double>>> clusters,
     return n;
 }
 
+void corAlpha(float &L_step, double &step_dir, int len,
+              std::vector<std::complex<double>> c){
+    double x_cm, y_cm, x_tmp, y_tmp;
+    findCM(x_cm, y_cm, c);
+    x_tmp = x_cm + L_step*std::cos(step_dir);
+    y_tmp = y_cm + L_step*std::sin(step_dir);
+    y_tmp += x_cm/double(len);
+    L_step = std::sqrt(std::pow(x_tmp - x_cm, 2) + std::pow(y_tmp - y_cm, 2));
+    step_dir = std::acos((x_tmp - x_cm)/L_step);
+}
 
+void findCM(double &x_cm, double &y_cm, std::vector<std::complex<double>> c){
+    double x_sum = 0;
+    double y_sum = 0;
+    for (int i = 0; i < c.size(); ++i){
+        x_sum += real(c[i]);
+        y_sum += imag(c[i]);
+    }
+    x_cm = x_sum/double(c.size());
+    y_cm = y_sum/double(c.size());
+}
 
+void refill(std::vector<std::vector<std::complex<double>>> &clusters,
+            std::vector<std::vector<int>> &num_grid_C,
+            std::vector<std::vector<int>> num_grid_N,
+            std::mt19937::result_type seed, int len, float r_p,  int amount){
+    double X, Y, tmp1, tmp2, x_c, y_c, x_tmp, y_tmp;
+    int counter = 0;
+    bool can_move = true;
+    std::vector<std::complex<double>> to_check;
+    auto coord = std::bind(std::uniform_real_distribution<double>
+                           (0, double(num_grid_C.size())),
+                           std::mt19937(seed));
+    while (counter < amount){
+        can_move = true;
+        tmp1 = coord();
+        tmp2 = coord();
+        X = tmp1;
+        Y = tmp2;
+        
+        for (int i = 0; i < clusters.size(); ++i){
+            for (int j = 0; j < clusters[i].size(); ++j){
+                x_tmp = real(clusters[i][j]);
+                y_tmp = imag(clusters[i][j]);
+                X = tmp1;
+                Y = tmp2;
+                findShortestDist(len, x_tmp, y_tmp, X, Y, r_p);
+                if (findSingleDist(X, Y, x_tmp, y_tmp) <= 2.0*r_p){
+                    can_move = false;
+                }
+            }
+        }
 
+        
+        if (can_move == true){
+            std::vector<std::complex<double>> to_insert;
+            to_insert.push_back({tmp1, tmp2});
+            clusters.push_back(to_insert);
+            std::cout << tmp1 << "," << tmp2 << std::endl;
+            num_grid_C[floor(tmp1)][floor(tmp2)] = clusters.size()-1;
+            counter++;
+        }
+    }
+}
 
+double findSingleDist(double X, double Y, double x_c, double y_c){
+    double dist = std::sqrt(std::pow(X - x_c, 2.0) + std::pow(Y - y_c, 2.0));
+    return dist;
+}
 
+void fallOut(std::vector<std::vector<std::complex<double>>> &clusters,
+            std::vector<std::vector<int>> &num_grid_C,
+            std::vector<std::vector<int>> &num_grid_N, int cut_off,
+            std::vector<int> &amounts, int &out_counter, int &cluster_sum,
+            int &counter_sum){
+    std::vector<int> to_cut;
+    for (int i = 0; i < clusters.size(); i++){
+        if (clusters[i].size() >= cut_off){
+            out_counter++;
+            counter_sum++;
+            cluster_sum += clusters[i].size();
+            //std::cout << "We have fallout!" << std::endl;
+            //std::cout << clusters[i][0] << std::endl;
+            to_cut.push_back(i);
+            amounts.push_back(clusters[i].size());
+            for (int j = 0; j < clusters[i].size(); ++j){
+                num_grid_C[floor(real(clusters[i][j]))]
+                          [floor(imag(clusters[i][j]))] = 0;
+                num_grid_N[floor(real(clusters[i][j]))]
+                          [floor(imag(clusters[i][j]))] = 0;
+            }
+        }
+    }
+    for (int i = 0; i < to_cut.size(); ++i){
+        updateNum_grid(num_grid_C, to_cut[i]-i, clusters);
+        clusters.erase(clusters.begin() + to_cut[i]-i);
+    }
+}
+
+void FLC(std::vector<std::vector<std::complex<double>>> &clusters){
+    int largest = 0;
+    for (int i = 0; i < clusters.size(); ++i){
+        if (clusters[i].size() > largest){
+            largest = clusters[i].size();
+        }
+    }
+    std::cout << "largest cluster = " << largest << std::endl;
+}
 
 
 
